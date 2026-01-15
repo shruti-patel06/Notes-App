@@ -55,7 +55,7 @@ Note App/
 ├── index.html      # Main HTML file
 ├── script.js       # JavaScript logic
 ├── style.css       # CSS styling
-└── README.md       # This file
+└── README.md       # README file
 ```
 
 
