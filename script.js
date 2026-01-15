@@ -10,7 +10,8 @@ function saveNotes(){
         const timestamp = li.dataset.timestamp;
         const pinned = li.classList.contains('pinned');
         const tags = JSON.parse(li.dataset.tags || '[]');
-        return {text, timestamp, pinned, tags};
+        const id = parseInt(li.dataset.id);
+        return {id, text, timestamp, pinned, tags};
     });
     localStorage.setItem("notes", JSON.stringify(notes));
 }
@@ -20,7 +21,9 @@ function filterNotes() {
     const notes = noteslist.children;
     Array.from(notes).forEach(li => {
         const text = li.querySelector("span").textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
+        const tags = JSON.parse(li.dataset.tags || '[]');
+        const hasTag = tags.some(tag => tag.toLowerCase().includes(searchTerm));
+        if (text.includes(searchTerm) || hasTag) {
             li.style.display = "flex";
         } else {
             li.style.display = "none";
@@ -63,17 +66,23 @@ function editNote(li,textspan, editBtn){
 
 //function to load notes from localstorage
 function loadNotes() {
+    noteslist.innerHTML = ''; // Clear existing notes
     const notes = JSON.parse(localStorage.getItem("notes")) || [];
-    // Sort notes so pinned come first
-    notes.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    // Sort notes: pinned first, then by id (creation order)
+    notes.sort((a, b) => {
+        if (a.pinned !== b.pinned) return b.pinned - a.pinned;
+        return a.id - b.id;
+    });
     notes.forEach(note => {
-        let text, timestamp, pinned, tags;
+        let id, text, timestamp, pinned, tags;
         if (typeof note === 'string') {
+            id = Date.now() + Math.random(); // Assign new id for old notes
             text = note;
             timestamp = 'Created before timestamps';
             pinned = false;
             tags = [];
         } else {
+            id = note.id || (Date.now() + Math.random());
             text = note.text;
             timestamp = note.timestamp;
             pinned = note.pinned || false;
@@ -131,6 +140,7 @@ function loadNotes() {
                 editNote(li, textspan, editBtn);
             }
         });
+        li.dataset.id = id;
         li.dataset.timestamp = timestamp;
         li.dataset.tags = JSON.stringify(tags);
         li.appendChild(textspan);
@@ -152,6 +162,7 @@ addBtn.addEventListener("click",()=>{
     if(!text){
         return;
     }
+    const id = Date.now();
     const timestamp = new Date().toLocaleString();
     const li=document.createElement("li");
     const textspan = document.createElement("span");
@@ -204,6 +215,7 @@ addBtn.addEventListener("click",()=>{
             editNote(li, textspan, editBtn);
         }
     });
+    li.dataset.id = id;
     li.dataset.timestamp = timestamp;
     li.dataset.tags = JSON.stringify(tags);
     li.appendChild(textspan);
